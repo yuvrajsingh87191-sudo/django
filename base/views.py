@@ -21,17 +21,21 @@ from django.contrib.auth.models import User
 
 def loginPage(request):
     page = 'login'
+
     if request.user.is_authenticated:
         return redirect('home')
 
     if request.method == 'POST':
-        username= request.POST.get('username').lower()
-        password = request.POST.get('password')
+        username_or_email = request.POST.get('username', '')
+        password = request.POST.get('password', '')
+
+        username_or_email = username_or_email.lower()
 
         try:
-            user = User.objects.get(username=username)
-        except:
-            messages.error(request, 'User does not exist')
+            user_obj = User.objects.get(email=username_or_email)
+            username = user_obj.username
+        except User.DoesNotExist:
+            username = username_or_email
 
         user = authenticate(request, username=username, password=password)
 
@@ -39,11 +43,10 @@ def loginPage(request):
             login(request, user)
             return redirect('home')
         else:
-            messages.error(request, 'Username OR password does not exit')
+            messages.error(request, 'Username OR password does not exist')
 
     context = {'page': page}
     return render(request, 'base/login_register.html', context)
-
 
 
 def logoutUser(request):
